@@ -6,3 +6,8 @@ library(readxl)
 
 data <- read_xlsx("Immunologic profiles of patients with COVID-19.xlsx")
 
+#Data Exploration
+
+mean(data$AGE)
+sd(data$AGE)
+(data$BTLA)
