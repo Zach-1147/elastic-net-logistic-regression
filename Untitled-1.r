@@ -164,6 +164,69 @@ plot(roc_test, main = "ROC Curve - Test", col = "blue")
 abline(h = best_snsp_test[best_indx_test, 1], v = best_snsp_test[best_indx_test, 2], col = "red", lty = 2)
 par(mfrow=c(1,1))
 
+##### Problem 2 ----
 
+library(GGally)
 
+p2_data <- load("geneexpression2.rda")
+gene_exp_data <- get(p2_data)
+str(gene_exp_data)
+view(gene_exp_data)
 
+# Eigenvalues Using prcomp() and covariance matrix
+mat <- var(gene_exp_data)
+eigen(mat)$values
+prcomp(gene_exp_data)$sdev^2
+
+# Using eigen()
+
+eg.vals <- eigen(mat)$values
+eg.vcs <- eigen(mat)$vectors
+
+result_matrix <- matrix(NA, ncol=156, nrow = 158)
+
+result_matrix[157,] <- eg.vals
+
+result_matrix[158,] <- cumsum(eg.vals/sum(eg.vals)*100)
+
+rownames(result_matrix) <- c(colnames(gene_exp_data), "lambda.hat", "cumulative %")
+
+result_matrix <- as.data.frame(result_matrix)
+
+for (i in 1:ncol(result_matrix)) {
+  colnames(result_matrix)[i] <- paste("PC", i, sep = "")
+}
+
+result_matrix[1:156,1:156] <- eg.vcs
+
+round(result_matrix, 3)
+
+plot(as.ts(eg.vals), ylab="lambda-hat", xlab="PC", main = "The Scree Plot")
+
+result_matrix[,1:2]
+
+pc.scores <- matrix(NA, ncol=156, nrow = 30)
+
+score.fn <- function (i,eigen.vector) {	
+  as.numeric(t(eigen.vector)%*%i)}
+
+for (j in 1:156) {
+  pc.scores[,j] <- apply(gene_exp_data, 1, score.fn, eigen.vector = eg.vcs[,j])}
+
+var(pc.scores)
+diag(var(pc.scores))
+eg.vals
+
+plot (pc.scores[,1] , pc.scores[,2], main = " PC2  Vs.  PC1" )
+text(pc.scores[, 1], pc.scores[, 2], labels = rownames(gene_exp_data), pos = 3)
+
+# Plotting PCAs using ggfortify (based on ggplot2)
+pca_result <- prcomp(gene_exp_data)
+
+pc_scores <- as.data.frame(pca_result$x)
+
+ggplot(pc_scores, aes(x = PC1, y = PC2, label = rownames(pc_scores))) +
+  geom_point() +
+  geom_text(hjust = 0, vjust = 0) +  # Adjust label position
+  labs(x = "Principal Component 1", y = "Principal Component 2") +
+  theme_minimal()
