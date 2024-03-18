@@ -85,7 +85,17 @@ for (i in seq_along(alpha_values)) {
   #Fit model using cross-validation
   cvx <- cv.glmnet(X_train, Y_train, nfolds = 10, family="binomial", alpha=alpha, type.measure = "auc", foldid = std_foldid)
   
-  dev_plots[[i]] <- plot(cvx) #store current model's plot
+  #Store the plot
+  #Temporarily turn off plotting to display 
+  dev_hold <- dev.cur() 
+  pdf(NULL)  
+  
+  #Generate the plot and store it
+  plot(cvx)
+  dev_plots[[i]] <- recordPlot()
+
+  dev.off() 
+  dev.set(dev_hold)
 
   #Make predictions on both training and test sets using best lambda value for each alpha
   prds.train <- predict(cvx, newx = X_train, type = "response", s=cvx$lambda.min)
