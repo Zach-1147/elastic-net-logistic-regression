@@ -22,7 +22,6 @@ library(plotly)
 library(glmnet)
 library(caret)
 
-packageVersion("pROC")
 
 ## -------------- DATA CLEANING ----------------------------
 
@@ -304,8 +303,6 @@ par(mfrow=c(1,1))
 
 library(GGally)
 
-<<<<<<< HEAD
-=======
 # Load the RDA data file and get the data into an R object.
 >>>>>>> c1fa23f (Final touches for problem 2.)
 p2_data <- load("geneexpression2.rda")
@@ -394,7 +391,6 @@ var(pc.scores)
 diag(var(pc.scores))
 eg.vals
 
-<<<<<<< HEAD
 plot (pc.scores[,1] , pc.scores[,2], main = " PC2  Vs.  PC1" )
 text(pc.scores[, 1], pc.scores[, 2], labels = rownames(gene_exp_data), pos = 3)
 
@@ -467,8 +463,7 @@ ggplot(pc_scores, aes(x = PC1, y = PC2, label = rownames(pc_scores))) +
   labs(x = "Principal Component 1", y = "Principal Component 2") +
   theme_minimal()
 
-=======
 #Construct the PCA plot and compare to the previous PCA plot. Analyze the point labels to ensure that the PCA plots are similar.
 plot (-pc.scores[,1] , -pc.scores[,2], main = " PC2  Vs.  PC1" )
 text(-pc.scores[, 1], -pc.scores[, 2], labels = rownames(gene_exp_data), pos = 3)
->>>>>>> c1fa23f (Final touches for problem 2.)
+
