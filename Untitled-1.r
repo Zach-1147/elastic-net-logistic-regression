@@ -304,7 +304,6 @@ par(mfrow=c(1,1))
 library(GGally)
 
 # Load the RDA data file and get the data into an R object.
->>>>>>> c1fa23f (Final touches for problem 2.)
 p2_data <- load("geneexpression2.rda")
 gene_exp_data <- get(p2_data)
 
@@ -318,6 +317,16 @@ pca_result <- prcomp(gene_exp_data)
 
 # Extract the PC scores as a data frame.
 pc_scores <- as.data.frame(pca_result$x)
+
+# Extract the eigenvalues for the scree plot.
+eigenvalues <- pca_result$sdev^2
+
+# Construct the scree plot.
+plot(1:length(eigenvalues), eigenvalues, 
+     type = "b", 
+     xlab = "Principal Component", 
+     ylab = "Eigenvalue",
+     main = "Scree Plot")
 
 # Extract the subject health and cell types information from the names of the observations and add them to new columns in the data frame.
 pc_scores$health <- substr(rownames(gene_exp_data), 1, 3)
@@ -338,7 +347,7 @@ ggplot(pc_scores, aes(x = PC1, y = PC2, shape = health, color = cell_type)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
-# We will construct another PCA using the eigen() function directly. We want to confirm that the PCA plots similar to verify that the PCA was performed properly.
+# We will construct another PCA using the eigen() function directly. We want to confirm that the PCA plots are similar to verify that the PCA was performed properly.
 # Construct the covariance matrix that we will work with.
 mat <- var(gene_exp_data)
 
@@ -391,79 +400,6 @@ var(pc.scores)
 diag(var(pc.scores))
 eg.vals
 
-plot (pc.scores[,1] , pc.scores[,2], main = " PC2  Vs.  PC1" )
-text(pc.scores[, 1], pc.scores[, 2], labels = rownames(gene_exp_data), pos = 3)
-
-# Plotting PCAs using ggfortify (based on ggplot2)
-pca_result <- prcomp(gene_exp_data)
-
-pc_scores <- as.data.frame(pca_result$x)
-
-ggplot(pc_scores, aes(x = PC1, y = PC2, label = rownames(pc_scores))) +
-  geom_point() +
-  geom_text(hjust = 0, vjust = 0) +  # Adjust label position
-  labs(x = "Principal Component 1", y = "Principal Component 2") +
-  theme_minimal()
-
-# Eigenvalues Using prcomp() and covariance matrix
-mat <- var(gene_exp_data)
-eigen(mat)$values
-prcomp(gene_exp_data)$sdev^2
-
-# Using eigen()
-
-eg.vals <- eigen(mat)$values
-eg.vcs <- eigen(mat)$vectors
-
-result_matrix <- matrix(NA, ncol=156, nrow = 158)
-
-result_matrix[157,] <- eg.vals
-
-result_matrix[158,] <- cumsum(eg.vals/sum(eg.vals)*100)
-
-rownames(result_matrix) <- c(colnames(gene_exp_data), "lambda.hat", "cumulative %")
-
-result_matrix <- as.data.frame(result_matrix)
-
-for (i in 1:ncol(result_matrix)) {
-  colnames(result_matrix)[i] <- paste("PC", i, sep = "")
-}
-
-result_matrix[1:156,1:156] <- eg.vcs
-
-round(result_matrix, 3)
-
-plot(as.ts(eg.vals), ylab="lambda-hat", xlab="PC", main = "The Scree Plot")
-
-result_matrix[,1:2]
-
-pc.scores <- matrix(NA, ncol=156, nrow = 30)
-
-score.fn <- function (i,eigen.vector) {	
-  as.numeric(t(eigen.vector)%*%i)}
-
-for (j in 1:156) {
-  pc.scores[,j] <- apply(gene_exp_data, 1, score.fn, eigen.vector = eg.vcs[,j])}
-
-var(pc.scores)
-diag(var(pc.scores))
-eg.vals
-
-plot (pc.scores[,1] , pc.scores[,2], main = " PC2  Vs.  PC1" )
-text(pc.scores[, 1], pc.scores[, 2], labels = rownames(gene_exp_data), pos = 3)
-
-# Plotting PCAs using ggfortify (based on ggplot2)
-pca_result <- prcomp(gene_exp_data)
-
-pc_scores <- as.data.frame(pca_result$x)
-
-ggplot(pc_scores, aes(x = PC1, y = PC2, label = rownames(pc_scores))) +
-  geom_point() +
-  geom_text(hjust = 0, vjust = 0) +  # Adjust label position
-  labs(x = "Principal Component 1", y = "Principal Component 2") +
-  theme_minimal()
-
 #Construct the PCA plot and compare to the previous PCA plot. Analyze the point labels to ensure that the PCA plots are similar.
-plot (-pc.scores[,1] , -pc.scores[,2], main = " PC2  Vs.  PC1" )
+plot (-pc.scores[,1] , -pc.scores[,2], main = " PC2  Vs.  PC1")
 text(-pc.scores[, 1], -pc.scores[, 2], labels = rownames(gene_exp_data), pos = 3)
-
