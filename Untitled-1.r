@@ -286,55 +286,97 @@ par(mfrow=c(1,1))
 
 library(GGally)
 
+<<<<<<< HEAD
+=======
+# Load the RDA data file and get the data into an R object.
+>>>>>>> c1fa23f (Final touches for problem 2.)
 p2_data <- load("geneexpression2.rda")
 gene_exp_data <- get(p2_data)
+
+# Analyze the structure of the data take a look at the data by using the view() function.
 str(gene_exp_data)
 view(gene_exp_data)
 
-# Eigenvalues Using prcomp() and covariance matrix
+# We will construct PCAs using ggfortify (based on ggplot2).
+# Use the prcomp() function to run PCA on the gene_exp_data.
+pca_result <- prcomp(gene_exp_data)
+
+# Extract the PC scores as a data frame.
+pc_scores <- as.data.frame(pca_result$x)
+
+# Extract the subject health and cell types information from the names of the observations and add them to new columns in the data frame.
+pc_scores$health <- substr(rownames(gene_exp_data), 1, 3)
+pc_scores$cell_type <- sapply(strsplit(rownames(gene_exp_data), "_"), function(x) x[2])
+
+# Calculate the total variances explained by PC1 and PC2.
+variance_pc1 <- round(100 * (pca_result$sdev[1]^2 / sum(pca_result$sdev^2)), 2)
+variance_pc2 <- round(100 * (pca_result$sdev[2]^2 / sum(pca_result$sdev^2)), 2)
+
+# Construct the PCA plot, plotting PC1 on the x-axis and PC2 on the y-axis. Differentiate the healthy and melanoma patients by shape. Differentiate the cell type by color.
+ggplot(pc_scores, aes(x = PC1, y = PC2, shape = health, color = cell_type)) +
+  geom_point(size = 2) +
+  labs(x = paste("PC1 (", variance_pc1, "% of total variance)", sep = ""),
+       y = paste("PC2 (", variance_pc2, "% of total variance)", sep = ""),
+       title = "PC1 vs PC2") +
+  scale_shape_manual(values = c(16, 17)) +
+  scale_color_manual(values = c("red", "blue", "green")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# We will construct another PCA using the eigen() function directly. We want to confirm that the PCA plots similar to verify that the PCA was performed properly.
+# Construct the covariance matrix that we will work with.
 mat <- var(gene_exp_data)
-eigen(mat)$values
-prcomp(gene_exp_data)$sdev^2
 
-# Using eigen()
-
+# Using the eigen() function, we will extract the eigenvalues and eigenvectors.
 eg.vals <- eigen(mat)$values
 eg.vcs <- eigen(mat)$vectors
 
+# Initialize the matrix to contain our results.
 result_matrix <- matrix(NA, ncol=156, nrow = 158)
 
+# Add the eigenvalues into the 157th row.
 result_matrix[157,] <- eg.vals
 
+# Add the cumulative sum of PC variances into the last row.
 result_matrix[158,] <- cumsum(eg.vals/sum(eg.vals)*100)
 
+# Update the row names for the result_matrix. The names of the differentially expressed genes are used to name the first 156 rows.
 rownames(result_matrix) <- c(colnames(gene_exp_data), "lambda.hat", "cumulative %")
 
+# Convert to a data frame.
 result_matrix <- as.data.frame(result_matrix)
 
+# This for loop renames the columns of the results_matrix to "PC" then the number of the PC.
 for (i in 1:ncol(result_matrix)) {
   colnames(result_matrix)[i] <- paste("PC", i, sep = "")
 }
 
+# Input the eigenvectors into the result_matrix.
 result_matrix[1:156,1:156] <- eg.vcs
 
+# Round the values in the matrix to the thousandth decimal place.
 round(result_matrix, 3)
 
+# Construct the scree plot to analyze the variance explained by the PC's.
 plot(as.ts(eg.vals), ylab="lambda-hat", xlab="PC", main = "The Scree Plot")
 
-result_matrix[,1:2]
-
+# Initialize the matrix to contain the PC scores for the observations.
 pc.scores <- matrix(NA, ncol=156, nrow = 30)
 
+# Write a function that calculate the PC scores of the observations.
 score.fn <- function (i,eigen.vector) {	
   as.numeric(t(eigen.vector)%*%i)}
 
+# This for loop uses the function created above to calculate the PC scores.
 for (j in 1:156) {
   pc.scores[,j] <- apply(gene_exp_data, 1, score.fn, eigen.vector = eg.vcs[,j])}
 
+# Check the computation by comparing the eigenvalues.
 var(pc.scores)
 diag(var(pc.scores))
 eg.vals
 
+<<<<<<< HEAD
 plot (pc.scores[,1] , pc.scores[,2], main = " PC2  Vs.  PC1" )
 text(pc.scores[, 1], pc.scores[, 2], labels = rownames(gene_exp_data), pos = 3)
 
@@ -407,3 +449,8 @@ ggplot(pc_scores, aes(x = PC1, y = PC2, label = rownames(pc_scores))) +
   labs(x = "Principal Component 1", y = "Principal Component 2") +
   theme_minimal()
 
+=======
+#Construct the PCA plot and compare to the previous PCA plot. Analyze the point labels to ensure that the PCA plots are similar.
+plot (-pc.scores[,1] , -pc.scores[,2], main = " PC2  Vs.  PC1" )
+text(-pc.scores[, 1], -pc.scores[, 2], labels = rownames(gene_exp_data), pos = 3)
+>>>>>>> c1fa23f (Final touches for problem 2.)
