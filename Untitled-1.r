@@ -58,7 +58,7 @@ Y_test <- response[test_index]
 view(X_test)
 
 
-## -------------- MODEL TRAINING ----------------------------
+## -------------- MODEL TRAINING 10-FOLD CV ----------------------------
 
 #Dry run cross validation to obtain fold IDs to stroe for use throughout analysis.
 fold_id_run <- cv.glmnet(X_train, Y_train, nfolds = 10, family="binomial", type.measure = "auc", keep = TRUE)
@@ -156,9 +156,115 @@ best_train_auc <- test_auc[best_train_index]
 best_alpha_train
 best_train_auc
 
-### NOTE: WE NEED TO DO LITERATURE RESEARCH ON THE BIOLOGY OF THE CYTOKINES FOR SECOND PART OF FIRST QUESTION
 
-## -------------- PLOTTING MODELS ----------------------------
+## -------------- PLOTTING MODELS FOR 10-FOLD CV ----------------------------
+
+#Extract the AUC and sensitivity-specificity pairs for the best model
+best_auc_train <- train_auc[best_model_index]
+best_auc_test <- test_auc[best_model_index]
+best_snsp_train <- cbind(roc_train$sensitivities, roc_train$specificities)
+best_snsp_test <- cbind(roc_test$sensitivities, roc_test$specificities)
+best_indx_train <- which.min(apply(best_snsp_train, 1, function(x) abs(x[1] - x[2])))
+best_indx_test <- which.min(apply(best_snsp_test, 1, function(x) abs(x[1] - x[2])))
+
+
+par(mfrow = c(1, 2), cex.main = 1.1, cex.lab = .95, cex.axis = .95)
+plot(roc_train, main = "ROC Curve - Training", col = "violet")
+abline(h = best_snsp_train[best_indx_train, 1], v = best_snsp_train[best_indx_train, 2], col = "darkorange", lty = 2)
+plot(roc_test, main = "ROC Curve - Test", col = "violet")
+abline(h = best_snsp_test[best_indx_test, 1], v = best_snsp_test[best_indx_test, 2], col = "darkorange", lty = 2)
+par(mfrow=c(1,1))
+
+## -------------- MODEL TRAINING 20-FOLD CV ----------------------------
+
+#Initialize vectors to store AUC, threshold values, and coefficients for models
+train_auc <- list() 
+test_auc <- list()
+
+thresholds_train <- list()
+thresholds_test <- list()
+
+coefficients_list <- list() #to access coefficients by index
+dev_plots <- list() #store pots as well
+
+#For loop for each alpha value
+for (i in seq_along(alpha_values)) {
+  alpha <- alpha_values[i]
+  
+  #Fit model using cross-validation
+  cvx <- cv.glmnet(X_train, Y_train, nfolds = 20, family="binomial", alpha=alpha, type.measure = "auc", foldid = std_foldid)
+  
+  #Store the plot
+  #Temporarily turn off plotting to display 
+  dev_hold <- dev.cur() 
+  pdf(NULL)  
+  
+  #Generate the plot and store it
+  plot(cvx)
+  dev_plots[[i]] <- recordPlot()
+  
+  dev.off() 
+  dev.set(dev_hold)
+  
+  #Make predictions on both training and test sets using best lambda value for each alpha
+  prds.train <- predict(cvx, newx = X_train, type = "response", s=cvx$lambda.min)
+  prds.test <- predict(cvx, newx = X_test, type = "response", s=cvx$lambda.min)
+  
+  #Compute and store AUC for training and test sets
+  roc_train <- roc(Y_train, prds.train[,1])
+  roc_test <- roc(Y_test, prds.test[,1])
+  
+  #Apply min-max approach for training set to select best threshold
+  snsp_train <- cbind(roc_train$sensitivities, roc_train$specificities)
+  index_train_thresh <- which.max(apply(snsp_train, 1, min))
+  thresholds_train[i] <- roc_train$thresholds[index_train_thresh]
+  
+  #Apply min-max approach on testing set to select best threshold
+  snsp_test <- cbind(roc_test$sensitivities, roc_test$specificities)
+  index_test_thresh <- which.max(apply(snsp_test, 1, min))
+  thresholds_test[i] <- roc_test$thresholds[index_test_thresh]
+  
+  #Extract AUC's
+  train_auc[i] <- auc(roc_train)
+  test_auc[i] <- auc(roc_test)
+  
+  #Extract coefficients
+  coefficients_for_model <- coef(cvx, s = cvx$lambda.min)
+  coefficients_list[[i]] <- coefficients_for_model
+  
+}
+
+#Find the index of the best model based on the test and train AUCs
+best_model_index <- which.max(test_auc)
+best_train_index <- which.max(train_auc)
+
+best_alpha_plot <- dev_plots[[best_model_index]]
+best_alpha_plot
+
+#Look at coefficients for best testing model
+best_coefficients <- coefficients_list[[best_model_index]]
+best_coefficients <- as.data.frame(as.matrix(best_coefficients))
+view(best_coefficients)
+
+#Check stats for best test model
+best_alpha <- alpha_values[best_model_index]
+best_test_auc <- test_auc[best_model_index]
+best_lambda <- 
+  best_alpha
+best_test_auc
+
+#And for best in training
+best_coefficients_train <- coefficients_list[[best_train_index]]
+best_coefficients_train <- as.data.frame(as.matrix(best_coefficients_train))
+view(best_coefficients_train)
+
+best_alpha_train <- alpha_values[best_train_index]
+best_train_auc <- test_auc[best_train_index]
+
+best_alpha_train
+best_train_auc
+
+## -------------- PLOTTING MODELS FOR 20-FOLD CV ----------------------------
 
 #Extract the AUC and sensitivity-specificity pairs for the best model
 best_auc_train <- train_auc[best_model_index]
