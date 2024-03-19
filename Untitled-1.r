@@ -347,6 +347,10 @@ ggplot(pc_scores, aes(x = PC1, y = PC2, shape = health, color = cell_type)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
+# Construct a biplot (scaled)
+biplot(prcomp(gene_exp_data))
+par(cex = 0.8)
+
 # We will construct another PCA using the eigen() function directly. We want to confirm that the PCA plots are similar to verify that the PCA was performed properly.
 # Construct the covariance matrix that we will work with.
 mat <- var(gene_exp_data)
